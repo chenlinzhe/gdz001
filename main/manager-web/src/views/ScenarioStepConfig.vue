@@ -273,7 +273,7 @@
 
               <el-row :gutter="20">
                 <el-col :span="8">
-                  <el-form-item label="完全匹配分支" class="form-item">
+                  <el-form-item label="完全匹配分支" class="form-item" :style="{ backgroundColor: getBranchColor('完全匹配分支'), borderRadius: '4px', padding: '10px' }">
                     <el-select
                       v-model="step.exactMatchStepId"
                       placeholder="请选择完全匹配时的下一步骤"
@@ -297,7 +297,7 @@
                   </el-form-item>
                 </el-col>
                 <el-col :span="8">
-                  <el-form-item label="部分匹配分支" class="form-item">
+                  <el-form-item label="部分匹配分支" class="form-item" :style="{ backgroundColor: getBranchColor('部分匹配分支'), borderRadius: '4px', padding: '10px' }">
                     <el-select
                       v-model="step.partialMatchStepId"
                       placeholder="请选择部分匹配时的下一步骤"
@@ -321,7 +321,7 @@
                   </el-form-item>
                 </el-col>
                 <el-col :span="8">
-                  <el-form-item label="完全不匹配分支" class="form-item">
+                  <el-form-item label="完全不匹配分支" class="form-item" :style="{ backgroundColor: getBranchColor('完全不匹配分支'), borderRadius: '4px', padding: '10px' }">
                     <el-select
                       v-model="step.noMatchStepId"
                       placeholder="请选择完全不匹配时的下一步骤"
@@ -428,7 +428,8 @@ export default {
       steps: [],
       stepTemplates: [],
       templateDialogVisible: false,
-      loading: false
+      loading: false,
+      colorCycle: ['#FF4D4F', '#52C41A', '#1890FF', '#FAAD14', '#722ED1']  // Red, Green, Blue, Yellow, Purple
     }
   },
   mounted() {
@@ -831,6 +832,32 @@ export default {
 
     getStepOptions(currentStepIndex) {
       return this.allStepOptions.filter(option => option.index !== currentStepIndex);
+    },
+
+    getHeaderColor(index, step) {
+      const name = step.stepName || '';
+      if (name.includes('不匹配') || name.includes('完全不匹配')) {
+        return '#FF4D4F20';  // Light red
+      } else if (name.includes('部分匹配')) {
+        return '#95DE6420';  // Light green
+      } else if (name.includes('完全匹配')) {
+        return '#52C41A20';  // Green
+      } else {
+        // Fallback to cycle
+        const colorIndex = index % this.colorCycle.length;
+        return this.colorCycle[colorIndex] + '20';
+      }
+    },
+
+    getBranchColor(label) {
+      if (label.includes('不匹配') || label.includes('完全不匹配')) {
+        return '#FF4D4F20';  // Light red
+      } else if (label.includes('部分匹配')) {
+        return '#95DE6420';  // Light green
+      } else if (label.includes('完全匹配')) {
+        return '#389E0D20';  // Deep green
+      }
+      return '';  // No color if none match
     },
 
     // 更新临时ID映射
