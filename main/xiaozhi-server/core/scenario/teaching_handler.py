@@ -119,8 +119,18 @@ class TeachingHandler:
                                 self.logger.bind(tag=TAG).info(f"教学模式切换检测到消息列表，消息数量: {len(message_list)}")
                                 self._send_message_list(message_list)
                             else:
-                                # 没有消息列表，不发送任何消息
-                                self.logger.bind(tag=TAG).info(f"步骤 {step_id} 没有配置消息列表，教学模式切换不发送消息")
+
+                                print("in perfect_match_next 没有消息列表，下一步骤")
+
+                                current_step = result.get("current_step", {})  
+                                encouragement = current_step.get('encouragementWords', '')  
+
+                                print("in encouragement: ", encouragement)
+
+                            
+                                #直接到教学结束
+                                self._handle_teaching_completion("教学结束，"+encouragement)
+                              
                         else:
                             # 没有步骤ID，不发送任何消息
                             self.logger.bind(tag=TAG).info(f"没有步骤ID，教学模式切换不发送消息")
@@ -157,8 +167,19 @@ class TeachingHandler:
                             self.logger.bind(tag=TAG).info(f"开始教学检测到消息列表，消息数量: {len(message_list)}")
                             self._send_message_list(message_list)
                         else:
-                            # 没有消息列表，不发送任何消息
-                            self.logger.bind(tag=TAG).info(f"步骤 {step_id} 没有配置消息列表，开始教学不发送消息")
+
+                            print("in perfect_match_next 没有消息列表，下一步骤")
+
+                            current_step = result.get("current_step", {})  
+                            encouragement = current_step.get('encouragementWords', '')  
+
+                            print("in encouragement: ", encouragement)
+
+                           
+                            #直接到教学结束
+                            self._handle_teaching_completion("教学结束，"+encouragement)
+
+
                     else:
                         # 没有步骤ID，不发送任何消息
                         self.logger.bind(tag=TAG).info(f"没有步骤ID，开始教学不发送消息")
@@ -178,7 +199,7 @@ class TeachingHandler:
 
                     print("test3---------------------------------------")   
 
-                                        # 1. 发送完成消息（使用0.5倍语速）
+                     # 1. 发送完成消息（使用0.5倍语速）
                     self._send_tts_message(ai_message, speech_rate=0.5)    
 
                     current_step = result.get("current_step", {})
@@ -203,10 +224,22 @@ class TeachingHandler:
                             self._send_message_list(message_list)
 
                             print("test   3.2222---------------------------------------")        
-                            message_sent = True
+                            
+                        
                         else:
-                            # 没有消息列表，不发送任何消息
-                            self.logger.bind(tag=TAG).info(f"⚠️ 步骤 {step_id} 没有配置消息列表，不发送消息")
+
+                            print("in perfect_match_next 没有消息列表，下一步骤")
+
+                            current_step = result.get("current_step", {})  
+                            encouragement = current_step.get('encouragementWords', '')  
+
+                            print("in encouragement: ", encouragement)
+
+                           
+                            #直接到教学结束
+                            return self._handle_teaching_completion("教学结束，"+encouragement)
+
+                        message_sent = True
 
                     # 如果没有发送步骤消息，使用评估反馈
                     if not message_sent:
@@ -235,46 +268,9 @@ class TeachingHandler:
 
 
                 elif action == "completed":
-                    # 教学完成，切换到自由模式
-                    self.logger.bind(tag=TAG).info(f"教学完成，最终得分: {result.get('final_score')}")
 
-
-                    print(f"ai_message--------------------------------------: {ai_message}")
-                    
-                    # 1. 发送完成消息（使用0.5倍语速）
-                    self._send_tts_message(ai_message, speech_rate=0.5)
-                    
-
-
-                    
-                    # 4. 发送自由对话欢迎消息（使用0.5倍语速）
-                    free_chat_welcome = "现在我们可以自由聊天了，你想聊什么呢？"
-                    self._send_tts_message(free_chat_welcome, speech_rate=0.5)
-
-                    self.connection.llm_finish_task = True
-                    self.connection.allow_interrupt = True
-                    
-                    # 🔥 切换到自由对话模式，设置自由对话提示词
-                    free_chat_prompt = f"""你是一个孤独症儿童的教育陪伴助手。你的用户大概在6岁左右，你是{self.connection.child_name}的AI朋友，你叫海王星，现在处于自由聊天模式。
-
-请遵循以下原则：
-1. 用亲切、活泼的语气与{self.connection.child_name}交流，像朋友一样
-2. 可以讲故事、聊天、回答问题、玩文字游戏
-3. 鼓励孩子的好奇心和想象力，给予正面引导
-4. 回答要简短有趣，适合儿童理解，避免过于复杂的表达
-5. 保持耐心和热情，让{self.connection.child_name}感受到陪伴和关爱
-6. 每次回复尽量不超过30个字，讲故事可以适当加长。
-6. 如果{self.connection.child_name}说"讲故事"，直接讲一个适合儿童的有趣故事
-
-当前时间：{{{{current_time}}}}"""
-                    
-                    self.connection.change_system_prompt(free_chat_prompt)
-                    self.logger.bind(tag=TAG).info(f"✅ 已设置自由对话提示词，用户: {self.connection.child_name}")
-                    
-                    self.logger.bind(tag=TAG).info("教学完成处理结束，系统已切换到自由模式")
-                    # 🔥 关键：返回 None 让LLM处理用户输入
-                    return None
-
+                    #调用教学完成的方法。
+                    return self._handle_teaching_completion(ai_message)
 
 
                 elif action == "free_chat":
@@ -318,6 +314,53 @@ class TeachingHandler:
             self.logger.bind(tag=TAG).error(f"处理聊天模式失败: {e}")
             self._end_tts_session()
             return None
+
+
+
+
+    def _handle_teaching_completion(self, ai_message: str = "") -> None:  
+
+        # 教学完成，切换到自由模式
+        # self.logger.bind(tag=TAG).info(f"教学完成，最终得分: {result.get('final_score')}")
+
+
+        print(f"ai_message--------------------------------------: {ai_message}")
+        
+        # 1. 发送完成消息（使用0.5倍语速）
+        self._send_tts_message(ai_message, speech_rate=0.5)
+        
+
+
+        
+        # 4. 发送自由对话欢迎消息（使用0.5倍语速）
+        free_chat_welcome = "现在我们可以自由聊天了，你想聊什么呢？"
+        self._send_tts_message(free_chat_welcome, speech_rate=0.5)
+
+        self.connection.llm_finish_task = True
+        self.connection.allow_interrupt = True
+        
+        # 🔥 切换到自由对话模式，设置自由对话提示词
+        free_chat_prompt = f"""你是一个孤独症儿童的教育陪伴助手。你的用户大概在6岁左右，你是{self.connection.child_name}的AI朋友，你叫海王星，现在处于自由聊天模式。
+
+请遵循以下原则：
+1. 用亲切、活泼的语气与{self.connection.child_name}交流，像朋友一样
+2. 可以讲故事、聊天、回答问题、玩文字游戏
+3. 鼓励孩子的好奇心和想象力，给予正面引导
+4. 回答要简短有趣，适合儿童理解，避免过于复杂的表达
+5. 保持耐心和热情，让{self.connection.child_name}感受到陪伴和关爱
+6. 每次回复尽量不超过30个字，讲故事可以适当加长。
+6. 如果{self.connection.child_name}说"讲故事"，直接讲一个适合儿童的有趣故事
+
+当前时间：{{{{current_time}}}}"""
+        
+        self.connection.change_system_prompt(free_chat_prompt)
+        self.logger.bind(tag=TAG).info(f"✅ 已设置自由对话提示词，用户: {self.connection.child_name}")
+        
+        self.logger.bind(tag=TAG).info("教学完成处理结束，系统已切换到自由模式")
+        # 🔥 关键：返回 None 让LLM处理用户输入
+        return None
+
+
 
 
     """

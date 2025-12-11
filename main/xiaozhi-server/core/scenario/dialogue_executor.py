@@ -240,18 +240,54 @@ class ScenarioTrigger:
             return self.detect_button_trigger(user_input)
         return None
     
-    def detect_voice_trigger(self, text: str) -> Optional[Dict]:
-        """语音触发检测"""
-        try:
-            scenarios = self.scenario_manager.get_active_scenarios()
-            for scenario in scenarios:
-                trigger_keywords = json.loads(scenario.get('triggerKeywords', '[]'))
-                if any(keyword in text for keyword in trigger_keywords):
-                    return scenario
+    # def detect_voice_trigger(self, text: str) -> Optional[Dict]:
+    #     """语音触发检测"""
+    #     try:
+    #         scenarios = self.scenario_manager.get_active_scenarios()
+    #         for scenario in scenarios:
+    #             trigger_keywords = json.loads(scenario.get('triggerKeywords', '[]'))
+    #             if any(keyword in text for keyword in trigger_keywords):
+    #                 return scenario
+    #         return None
+    #     except Exception as e:
+    #         print(f"语音触发检测失败: {e}")
+    #         return None
+
+
+    def detect_voice_trigger(self, text: str) -> Optional[Dict]:  
+        """语音触发检测"""  
+        try:  
+            print(f"=== 场景触发检测调试 ===")  
+            print(f"输入文本: {text}")  
+            
+            scenarios = self.scenario_manager.get_active_scenarios()  
+            print(f"获取到 {len(scenarios)} 个活跃场景")  
+            
+            for i, scenario in enumerate(scenarios):  
+                print(f"场景 {i+1}: {scenario.get('scenarioName', 'Unknown')}")  
+                print(f"  - ID: {scenario.get('id')}")  
+                print(f"  - isActive: {scenario.get('isActive')}")  
+                print(f"  - triggerType: {scenario.get('triggerType')}")  
+                
+                trigger_keywords = json.loads(scenario.get('triggerKeywords', '[]'))  
+                print(f"  - 触发关键词: {trigger_keywords}")  
+                
+                # 检查匹配  
+                for keyword in trigger_keywords:  
+                    if keyword in text:  
+                        print(f"✅ 匹配成功: 关键词 '{keyword}' 在文本 '{text}' 中")  
+                        return scenario  
+                    else:  
+                        print(f"❌ 匹配失败: 关键词 '{keyword}' 不在文本 '{text}' 中")  
+            
+            print("❌ 没有匹配的场景")  
+            return None  
+        except Exception as e:  
+            print(f"语音触发检测失败: {e}")  
             return None
-        except Exception as e:
-            print(f"语音触发检测失败: {e}")
-            return None
+
+
+
     
     def detect_visual_trigger(self, card_id: str) -> Optional[Dict]:
         """视觉触发检测"""

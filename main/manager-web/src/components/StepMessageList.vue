@@ -42,7 +42,7 @@
           </template>
         </el-table-column>
         
-        <el-table-column prop="messageContent" label="消息内容" min-width="200">
+        <el-table-column prop="messageContent" label="消息内容" min-width="140">
           <template slot-scope="scope">
             <div class="message-content-cell">
               <span class="content-text" :title="scope.row.messageContent">
@@ -79,8 +79,8 @@
             </el-tag>
           </template>
         </el-table-column>
-        
-        <el-table-column label="操作" width="220" align="center" fixed="right">
+
+        <el-table-column label="操作" width="220" align="center">
           <template slot-scope="scope">
             <div class="table-actions">
               <el-button size="mini" type="primary" @click="editMessage(scope.$index)" title="编辑消息">
@@ -282,9 +282,10 @@ export default {
   },
   methods: {
     initializeMessages(messages) {
-      if (messages && messages.length > 0) {
-        this.messages = JSON.parse(JSON.stringify(messages));
-        this.originalMessages = JSON.parse(JSON.stringify(messages));
+      const safeMessages = Array.isArray(messages) ? messages : [];
+      if (safeMessages.length > 0) {
+        this.messages = JSON.parse(JSON.stringify(safeMessages));
+        this.originalMessages = JSON.parse(JSON.stringify(safeMessages));
         console.log('初始化消息列表:', this.messages);
       } else {
         this.messages = [];

@@ -46,41 +46,95 @@ class ChatStatusManager:
 
 
 
-    def is_mode_switch_command(self, user_text: str) -> Optional[str]:
-        """判断是否为模式切换命令 - 基于思维导图优化
+    # def is_mode_switch_command(self, user_text: str) -> Optional[str]:
+    #     """判断是否为模式切换命令 - 基于思维导图优化
 
-        Args:
-            user_text: 用户输入的文本
+    #     Args:
+    #         user_text: 用户输入的文本
 
-        Returns:
-            str: 目标模式 ("teaching_mode" 或 "free_mode")，如果不是切换命令返回None
-        """
-        user_text = user_text.strip()
-        self.logger.debug(f"判断是否为模式切换命令: {user_text}")
+    #     Returns:
+    #         str: 目标模式 ("teaching_mode" 或 "free_mode")，如果不是切换命令返回None
+    #     """
+    #     user_text = user_text.strip()
+    #     self.logger.debug(f"判断是否为模式切换命令: {user_text}")
 
-        # 教学模式命令 - 扩展更多自然表达
-        teaching_commands = [
-            "教学模式", "教学", "学习模式", "学习", "开始教学",
-            "我要学习", "教我", "学习时间", "上课", "开始学习",
-            "我想学习", "教我学习", "学习一下", "开始上课"
-        ]
+    #     # 教学模式命令 - 扩展更多自然表达
+    #     teaching_commands = [
+    #         "教学模式", "教学", "学习模式", "学习", "开始教学",
+    #         "我要学习", "教我", "学习时间", "上课", "开始学习",
+    #         "我想学习", "教我学习", "学习一下", "开始上课"
+    #     ]
 
-        # 自由模式命令 - 扩展更多自然表达
-        free_commands = [
-            "自由模式", "自由聊天", "聊天模式", "聊天", "结束教学",
-            "不学了", "休息", "玩一会", "随便聊", "停止学习",
-            "不想学了", "休息一下", "聊聊天", "玩一下"
-        ]
+    #     # 自由模式命令 - 扩展更多自然表达
+    #     free_commands = [
+    #         "自由模式", "自由聊天", "聊天模式", "聊天", "结束教学",
+    #         "不学了", "休息", "玩一会", "随便聊", "停止学习",
+    #         "不想学了", "休息一下", "聊聊天", "玩一下"
+    #     ]
 
-        # 检查是否为教学模式命令
-        if any(cmd in user_text for cmd in teaching_commands):
-            self.logger.info(f"检测到教学模式切换命令: {user_text}")
-            return "teaching_mode"
-        elif any(cmd in user_text for cmd in free_commands):
-            self.logger.info(f"检测到自由模式切换命令: {user_text}")
-            return "free_mode"
+    #     # 检查是否为教学模式命令
+    #     if any(cmd in user_text for cmd in teaching_commands):
+    #         self.logger.info(f"检测到教学模式切换命令: {user_text}")
+    #         return "teaching_mode"
+    #     elif any(cmd in user_text for cmd in free_commands):
+    #         self.logger.info(f"检测到自由模式切换命令: {user_text}")
+    #         return "free_mode"
 
+    #     return None
+
+
+
+    def is_mode_switch_command(self, user_text: str) -> Optional[Dict]:  
+        """判断是否为模式切换命令或场景触发 - 基于思维导图优化  
+    
+        Args:  
+            user_text: 用户输入的文本  
+    
+        Returns:  
+            Dict: 包含类型和场景信息  
+            - {"type": "teaching_mode", "scenario_id": None, "scenario": None}  # 普通模式切换  
+            - {"type": "scenario_trigger", "scenario_id": "xxx", "scenario": {...}}  # 场景触发  
+            - {"type": "free_mode", "scenario_id": None, "scenario": None}  # 自由模式切换  
+            - None: 不是切换命令  
+        """  
+        user_text = user_text.strip()  
+        self.logger.debug(f"判断是否为模式切换命令: {user_text}")  
+    
+        # 先检查场景触发  
+        from core.scenario.scenario_manager import scenario_trigger  
+        triggered_scenario = scenario_trigger.detect_trigger(user_text, "voice")  
+        if triggered_scenario:  
+            self.logger.info(f"检测到场景触发: {triggered_scenario.get('scenarioName', 'Unknown')}")  
+            return {  
+                "type": "scenario_trigger",  
+                "scenario_id": triggered_scenario['id'],  
+                "scenario": triggered_scenario  
+            }  
+    
+        # 教学模式命令 - 扩展更多自然表达  
+        teaching_commands = [  
+            "教学模式", "教学", "学习模式", "学习", "开始教学",  
+            "我要学习", "教我", "学习时间", "上课", "开始学习",  
+            "我想学习", "教我学习", "学习一下", "开始上课"  
+        ]  
+    
+        # 自由模式命令 - 扩展更多自然表达  
+        free_commands = [  
+            "自由模式", "自由聊天", "聊天模式", "聊天", "结束教学",  
+            "不学了", "休息", "玩一会", "随便聊", "停止学习",  
+            "不想学了", "休息一下", "聊聊天", "玩一下"  
+        ]  
+    
+        # 检查是否为教学模式命令  
+        if any(cmd in user_text for cmd in teaching_commands):  
+            self.logger.info(f"检测到教学模式切换命令: {user_text}")  
+            return {"type": "teaching_mode", "scenario_id": None, "scenario": None}  
+        elif any(cmd in user_text for cmd in free_commands):  
+            self.logger.info(f"检测到自由模式切换命令: {user_text}")  
+            return {"type": "free_mode", "scenario_id": None, "scenario": None}  
+    
         return None
+
 
     def set_user_chat_status(self, user_id: str, status: str) -> bool:
         """设置用户聊天状态
@@ -126,8 +180,13 @@ class ChatStatusManager:
             self.logger.error(f"清理用户聊天状态失败: {e}")
             return False
 
-    async def handle_user_input(self, user_id: str, user_text: str,
-                                child_name: str = "小朋友") -> Dict[str, Any]:
+
+
+    async def handle_user_input(self, user_id: str, user_text: str,  
+                                child_name: str = "小朋友", triggered_scenario: Dict = None) -> Dict[str, Any]:  
+
+
+
         """处理用户输入
 
         Args:
@@ -142,9 +201,13 @@ class ChatStatusManager:
             self.logger.info(f"处理用户输入: user_id={user_id}, user_text={user_text}, child_name={child_name}")
 
             # 检查是否为模式切换命令
-            target_mode = self.is_mode_switch_command(user_text)
-            if target_mode:
-                self.logger.info(f"检测到模式切换命令: {target_mode}")
+            target_mode_result = self.is_mode_switch_command(user_text)
+            if target_mode_result:
+                self.logger.info(f"检测到模式切换命令: {target_mode_result}")
+
+                target_mode = target_mode_result.get("type")  
+                self.logger.info(f"检测到切换命令: {target_mode}")  
+
                 # 切换模式
                 success = self.set_user_chat_status(user_id, target_mode)
                 if not success:
@@ -157,7 +220,16 @@ class ChatStatusManager:
                 if target_mode == "teaching_mode":
                     self.logger.info("切换到教学模式，开始教学会话")
                     # 切换到教学模式时，直接开始教学会话并输出场景第一句话
-                    return await self._start_teaching_session(user_id, child_name, from_mode_switch=True)
+                    # return await self._start_teaching_session(user_id, child_name, from_mode_switch=True)
+
+                    return await self._start_teaching_session(user_id, child_name, from_mode_switch=True, scenario=triggered_scenario)  
+                
+                elif target_mode == "scenario_trigger":  
+                    self.logger.info("场景触发，开始教学会话")  
+                    # 场景触发时使用返回的场景  
+                    scenario = target_mode_result.get("scenario")  
+                    return await self._start_teaching_session(user_id, child_name, from_mode_switch=False, scenario=scenario)                
+    
                 else:
                     self.logger.info("切换到自由模式")
                     return {
@@ -212,63 +284,47 @@ class ChatStatusManager:
             # 处理教学会话中的用户回复
             return await self._process_teaching_response(user_id, user_text, session_data, child_name)
 
-    async def _start_teaching_session(self, user_id: str, child_name: str, from_mode_switch: bool = False) -> Dict[
-        str, Any]:
-        """开始教学会话
-
-        Args:
-            user_id: 用户ID
-            child_name: 儿童姓名
-            from_mode_switch: 是否从模式切换开始
-
-        Returns:
-            Dict: 处理结果
-        """
-        try:
-            # self.logger.info(f"开始教学会话: user_id={user_id}, child_name={child_name}, from_mode_switch={from_mode_switch}")
 
 
-            print("in _start_teaching_session------------------------------------------------------")
-            # 获取默认教学场景
-            self.logger.info("正在获取默认教学场景...")
-            default_scenario = self.dialogue_service.get_default_teaching_scenario()
-            print(f"默认教学场景获取结果: {default_scenario}")
 
-            if default_scenario:
-                self.logger.info(f"获取到默认教学场景: {default_scenario.get('scenarioName', 'Unknown')}")
-                print(f"默认场景详情:")
-                print(f"  - 场景ID: {default_scenario.get('id', 'N/A')}")
-                print(f"  - 场景名称: {default_scenario.get('scenarioName', 'N/A')}")
-                print(f"  - 是否活跃: {default_scenario.get('isActive', 'N/A')}")
-                print(f"  - 代理ID: {default_scenario.get('agentId', 'N/A')}")
-                print(f"  - 是否默认教学: {default_scenario.get('isDefaultTeaching', 'N/A')}")
-                print(f"  - 创建时间: {default_scenario.get('createTime', 'N/A')}")
-                print(f"  - 更新时间: {default_scenario.get('updateTime', 'N/A')}")
-                print(f"  - 完整默认场景数据: {default_scenario}")
-            else:
-                self.logger.warning("没有获取到默认教学场景，尝试获取第一个可用场景")
-                # 如果没有默认教学场景，获取第一个可用场景
-                scenarios = self.dialogue_service.get_scenarios()
-                # print(f"获取到的所有场景: {scenarios}")
-                # self.logger.info(f"获取到 {len(scenarios) if scenarios else 0} 个场景")
 
-                if not scenarios or len(scenarios) == 0:
-                    self.logger.error("没有可用的教学场景")
-                    return {
-                        "success": False,
-                        "error": "没有可用的教学场景，请联系管理员配置教学场景"
-                    }
-                default_scenario = scenarios[0]
-                # print(f"选择第一个场景详情:")
-                # print(f"  - 场景ID: {default_scenario.get('id', 'N/A')}")
-                # print(f"  - 场景名称: {default_scenario.get('scenarioName', 'N/A')}")
-                # print(f"  - 是否活跃: {default_scenario.get('isActive', 'N/A')}")
-                # print(f"  - 代理ID: {default_scenario.get('agentId', 'N/A')}")
-                # print(f"  - 是否默认教学: {default_scenario.get('isDefaultTeaching', 'N/A')}")
-                # print(f"  - 创建时间: {default_scenario.get('createTime', 'N/A')}")
-                # print(f"  - 更新时间: {default_scenario.get('updateTime', 'N/A')}")
-                # print(f"  - 完整第一个场景数据: {default_scenario}")
-                self.logger.info(f"使用第一个场景: {default_scenario.get('scenarioName', 'Unknown')}")
+
+    async def _start_teaching_session(self, user_id: str, child_name: str,   
+                                    from_mode_switch: bool = False, scenario: Dict = None) -> Dict[str, Any]:  
+        """开始教学会话  
+        
+        Args:  
+            user_id: 用户ID  
+            child_name: 儿童姓名  
+            from_mode_switch: 是否从模式切换开始  
+            scenario: 触发的场景（新增参数）  
+        """  
+        try:  
+            print("in _start_teaching_session------------------------------------------------------")  
+            
+            # 🔥 修改：优先使用传递的场景，否则获取默认场景  
+            if scenario:  
+                default_scenario = scenario  
+                self.logger.info(f"使用触发的场景: {scenario.get('scenarioName', 'Unknown')}")  
+            else:  
+                # 原有逻辑：获取默认教学场景  
+                self.logger.info("正在获取默认教学场景...")  
+                default_scenario = self.dialogue_service.get_default_teaching_scenario()  
+                
+                if not default_scenario:  
+                    self.logger.warning("没有获取到默认教学场景，尝试获取第一个可用场景")  
+                    scenarios = self.dialogue_service.get_scenarios()  
+                    if not scenarios or len(scenarios) == 0:  
+                        self.logger.error("没有可用的教学场景")  
+                        return {  
+                            "success": False,  
+                            "error": "没有可用的教学场景，请联系管理员配置教学场景"  
+                        }  
+                    default_scenario = scenarios[0]  
+                    self.logger.info(f"使用第一个场景: {default_scenario.get('scenarioName', 'Unknown')}")  
+          
+
+
 
             # 使用数据库ID而不是scenarioId，因为API期望数字ID
             scenario_id = default_scenario.get("id")
@@ -506,6 +562,8 @@ class ChatStatusManager:
                         self.logger.info(
                             f"获取到步骤 {step_id} 的消息列表: {len(message_list) if message_list else 0} 条消息")
 
+
+
                     # 设置等待响应状态
                     session_data["waiting_for_response"] = True
                     session_data["wait_start_time"] = time.time()
@@ -633,6 +691,9 @@ class ChatStatusManager:
                 }
 
 
+
+
+            #-------------------总流程结尾-------------------------------------------
             
             # 简化逻辑：所有步骤都按叶子节点处理，重复输出AI消息列表
             self.logger.info(f"处理步骤逻辑 - 重复输出AI消息列表")
@@ -670,10 +731,10 @@ class ChatStatusManager:
                 #     self.logger.info(f"最后步骤鼓励词: {encouragement_words}")
                 
                 # # 生成完成消息
-                # completion_message = self._generate_completion_message(final_score, child_name)
-                # if encouragement_words:
-                #     completion_message = f"{encouragement_words} {completion_message}"
-                # self.logger.info(f"生成完成消息: {completion_message}")
+                completion_message = self._generate_completion_message(final_score, child_name)
+                if encouragement_words:
+                    completion_message = f"{encouragement_words} {completion_message}"
+                self.logger.info(f"生成完成消息: {completion_message}")
                 
                 result = {
                     "success": True,
@@ -686,6 +747,9 @@ class ChatStatusManager:
                 }
                 self.logger.info(f"返回完成结果: {result}")
                 return result
+
+
+
 
             #未完成的情况
             else:

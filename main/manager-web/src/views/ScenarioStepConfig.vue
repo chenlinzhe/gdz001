@@ -74,6 +74,15 @@
                       <el-radio :label="1">消息列表</el-radio>
                     </el-radio-group>
                   </el-form-item>
+                  <!-- <el-form-item label="消息模式" class="form-item">
+                    <el-radio-group 
+                      v-model="step.useMessageList" 
+                      @change="onMessageModeChange(step)"
+                      default-value="1">
+                      <el-radio :label="0">单个消息</el-radio>
+                      <el-radio :label="1">消息列表</el-radio>
+                    </el-radio-group> -->
+                  </el-form-item>
                 </el-col>
               </el-row>
 
@@ -248,7 +257,7 @@
               <!-- 鼓励词配置 -->
               <el-row :gutter="20">
                 <el-col :span="24">
-                  <el-form-item label="鼓励词" class="form-item">
+                  <el-form-item label="AI鼓励词" class="form-item">
                     <el-input
                       type="textarea"
                       v-model="step.encouragementWords"

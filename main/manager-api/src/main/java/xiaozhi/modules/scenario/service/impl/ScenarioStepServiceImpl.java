@@ -133,15 +133,18 @@ public class ScenarioStepServiceImpl extends ServiceImpl<ScenarioStepMapper, Sce
                 for (ScenarioStepEntity step : steps) {
                     List<StepMessageEntity> messages = messageService.getMessagesByStepIdOrdered(step.getStepId());
                     step.setStepMessages(messages);
+ 
                     
+                    step.setUseMessageList(1);
+                    step.setShowMessageListEditor(true);
                     // 设置是否显示消息列表编辑器
-                    if (messages != null && !messages.isEmpty()) {
-                        step.setUseMessageList(1);
-                        step.setShowMessageListEditor(true);
-                    } else {
-                        step.setUseMessageList(0);
-                        step.setShowMessageListEditor(false);
-                    }
+                    // if (messages != null && !messages.isEmpty()) {
+                    //     step.setUseMessageList(1);
+                    //     step.setShowMessageListEditor(true);
+                    // } else {
+                    //     step.setUseMessageList(0);
+                    //     step.setShowMessageListEditor(false);
+                    // }
                 }
             }
             

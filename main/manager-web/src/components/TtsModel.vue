@@ -79,11 +79,11 @@
       </div>
 
       <!-- 自定义滚动条 -->
-      <div class="custom-scrollbar" ref="scrollbar">
+      <!-- <div class="custom-scrollbar" ref="scrollbar">
         <div class="custom-scrollbar-track" ref="scrollbarTrack" @click="handleTrackClick">
           <div class="custom-scrollbar-thumb" ref="scrollbarThumb" @mousedown="startDrag"></div>
         </div>
-      </div>
+      </div> -->
     </div>
     <div class="action-buttons">
       <el-button type="primary" size="mini" @click="toggleSelectAll" style="background: #606ff3;border: None">
@@ -146,7 +146,7 @@ export default {
         this.updateShowReferenceColumns(); // 更新显示状态
         this.loadData(); // 对话框显示时加载数据
         this.$nextTick(() => {
-          this.updateScrollbar();
+          // this.updateScrollbar(); // Removed custom scrollbar update
         });
       }
     },
@@ -158,7 +158,7 @@ export default {
     },
     filteredTtsModels() {
       this.$nextTick(() => {
-        this.updateScrollbar();
+        // this.updateScrollbar(); // Removed custom scrollbar update
       });
     }
   },
@@ -170,15 +170,14 @@ export default {
     }
   },
   mounted() {
-    this.updateScrollbar();
-    window.addEventListener('resize', this.updateScrollbar);
-    window.addEventListener('mouseup', this.stopDrag);
-    window.addEventListener('mousemove', this.handleDrag);
+    // window.addEventListener('resize', this.updateScrollbar); // Removed custom scrollbar update
+    // window.addEventListener('mouseup', this.stopDrag); // Removed custom scrollbar update
+    // window.addEventListener('mousemove', this.handleDrag); // Removed custom scrollbar update
   },
   beforeDestroy() {
-    window.removeEventListener('resize', this.updateScrollbar);
-    window.removeEventListener('mouseup', this.stopDrag);
-    window.removeEventListener('mousemove', this.handleDrag);
+    // window.removeEventListener('resize', this.updateScrollbar); // Removed custom scrollbar update
+    // window.removeEventListener('mouseup', this.stopDrag); // Removed custom scrollbar update
+    // window.removeEventListener('mousemove', this.handleDrag); // Removed custom scrollbar update
   },
   methods: {
     // 更新是否显示参考列
@@ -247,36 +246,36 @@ export default {
       this.$emit('update:visible', false);
     },
 
-    updateScrollbar() {
-      const container = this.$refs.tableContainer;
-      const scrollbarThumb = this.$refs.scrollbarThumb;
-      const scrollbarTrack = this.$refs.scrollbarTrack;
+    // updateScrollbar() { // Removed custom scrollbar update
+    //   const container = this.$refs.tableContainer;
+    //   const scrollbarThumb = this.$refs.scrollbarThumb;
+    //   const scrollbarTrack = this.$refs.scrollbarTrack;
 
-      if (!container || !scrollbarThumb || !scrollbarTrack) return;
+    //   if (!container || !scrollbarThumb || !scrollbarTrack) return;
 
-      const { scrollHeight, clientHeight } = container;
-      const trackHeight = scrollbarTrack.clientHeight;
-      const thumbHeight = Math.max((clientHeight / scrollHeight) * trackHeight, 20);
+    //   const { scrollHeight, clientHeight } = container;
+    //   const trackHeight = scrollbarTrack.clientHeight;
+    //   const thumbHeight = Math.max((clientHeight / scrollHeight) * trackHeight, 20);
 
-      scrollbarThumb.style.height = `${thumbHeight}px`;
-      this.updateThumbPosition();
-    },
+    //   scrollbarThumb.style.height = `${thumbHeight}px`;
+    //   this.updateThumbPosition();
+    // },
 
-    updateThumbPosition() {
-      const container = this.$refs.tableContainer;
-      const scrollbarThumb = this.$refs.scrollbarThumb;
-      const scrollbarTrack = this.$refs.scrollbarTrack;
+    // updateThumbPosition() { // Removed custom scrollbar update
+    //   const container = this.$refs.tableContainer;
+    //   const scrollbarThumb = this.$refs.scrollbarThumb;
+    //   const scrollbarTrack = this.$refs.scrollbarTrack;
 
-      if (!container || !scrollbarThumb || !scrollbarTrack) return;
+    //   if (!container || !scrollbarThumb || !scrollbarTrack) return;
 
-      const { scrollHeight, clientHeight, scrollTop } = container;
-      const trackHeight = scrollbarTrack.clientHeight;
-      const thumbHeight = scrollbarThumb.clientHeight;
-      const maxTop = trackHeight - thumbHeight;
-      const thumbTop = (scrollTop / (scrollHeight - clientHeight)) * (trackHeight - thumbHeight);
+    //   const { scrollHeight, clientHeight, scrollTop } = container;
+    //   const trackHeight = scrollbarTrack.clientHeight;
+    //   const thumbHeight = scrollbarThumb.clientHeight;
+    //   const maxTop = trackHeight - thumbHeight;
+    //   const thumbTop = (scrollTop / (scrollHeight - clientHeight)) * (trackHeight - thumbHeight);
 
-      scrollbarThumb.style.top = `${Math.min(thumbTop, maxTop)}px`;
-    },
+    //   scrollbarThumb.style.top = `${Math.min(thumbTop, maxTop)}px`;
+    // },
 
     handleScroll() {
       const container = this.$refs.tableContainer;
@@ -286,54 +285,54 @@ export default {
           this.loadData();
         }
       }
-      this.updateThumbPosition();
+      // this.updateThumbPosition(); // Removed custom scrollbar update
     },
 
-    startDrag(e) {
-      this.isDragging = true;
-      this.startY = e.clientY;
-      this.scrollTop = this.$refs.tableContainer.scrollTop;
-      e.preventDefault();
-    },
+    // startDrag(e) { // Removed custom scrollbar update
+    //   this.isDragging = true;
+    //   this.startY = e.clientY;
+    //   this.scrollTop = this.$refs.tableContainer.scrollTop;
+    //   e.preventDefault();
+    // },
 
-    stopDrag() {
-      this.isDragging = false;
-    },
+    // stopDrag() { // Removed custom scrollbar update
+    //   this.isDragging = false;
+    // },
 
-    handleDrag(e) {
-      if (!this.isDragging) return;
+    // handleDrag(e) { // Removed custom scrollbar update
+    //   if (!this.isDragging) return;
 
-      const container = this.$refs.tableContainer;
-      const scrollbarTrack = this.$refs.scrollbarTrack;
-      const scrollbarThumb = this.$refs.scrollbarThumb;
-      const deltaY = e.clientY - this.startY;
-      const trackHeight = scrollbarTrack.clientHeight;
-      const thumbHeight = scrollbarThumb.clientHeight;
-      const maxScrollTop = container.scrollHeight - container.clientHeight;
+    //   const container = this.$refs.tableContainer;
+    //   const scrollbarTrack = this.$refs.scrollbarTrack;
+    //   const scrollbarThumb = this.$refs.scrollbarThumb;
+    //   const deltaY = e.clientY - this.startY;
+    //   const trackHeight = scrollbarTrack.clientHeight;
+    //   const thumbHeight = scrollbarThumb.clientHeight;
+    //   const maxScrollTop = container.scrollHeight - container.clientHeight;
 
-      const scrollRatio = (trackHeight - thumbHeight) / maxScrollTop;
-      container.scrollTop = this.scrollTop + deltaY / scrollRatio;
-    },
+    //   const scrollRatio = (trackHeight - thumbHeight) / maxScrollTop;
+    //   container.scrollTop = this.scrollTop + deltaY / scrollRatio;
+    // },
 
-    handleTrackClick(e) {
-      const container = this.$refs.tableContainer;
-      const scrollbarTrack = this.$refs.scrollbarTrack;
-      const scrollbarThumb = this.$refs.scrollbarThumb;
+    // handleTrackClick(e) { // Removed custom scrollbar update
+    //   const container = this.$refs.tableContainer;
+    //   const scrollbarTrack = this.$refs.scrollbarTrack;
+    //   const scrollbarThumb = this.$refs.scrollbarThumb;
 
-      if (!container || !scrollbarTrack || !scrollbarThumb) return;
+    //   if (!container || !scrollbarTrack || !scrollbarThumb) return;
 
-      const trackRect = scrollbarTrack.getBoundingClientRect();
-      const thumbHeight = scrollbarThumb.clientHeight;
-      const clickPosition = e.clientY - trackRect.top;
-      const thumbCenter = clickPosition - thumbHeight / 2;
+    //   const trackRect = scrollbarTrack.getBoundingClientRect();
+    //   const thumbHeight = scrollbarThumb.clientHeight;
+    //   const clickPosition = e.clientY - trackRect.top;
+    //   const thumbCenter = clickPosition - thumbHeight / 2;
 
-      const trackHeight = scrollbarTrack.clientHeight;
-      const maxTop = trackHeight - thumbHeight;
-      const newTop = Math.max(0, Math.min(thumbCenter, maxTop));
+    //   const trackHeight = scrollbarTrack.clientHeight;
+    //   const maxTop = trackHeight - thumbHeight;
+    //   const newTop = Math.max(0, Math.min(thumbCenter, maxTop));
 
-      scrollbarThumb.style.top = `${newTop}px`;
-      container.scrollTop = (newTop / (trackHeight - thumbHeight)) * (container.scrollHeight - container.clientHeight);
-    },
+    //   scrollbarThumb.style.top = `${newTop}px`;
+    //   container.scrollTop = (newTop / (trackHeight - thumbHeight)) * (container.scrollHeight - container.clientHeight);
+    // },
 
     startEdit(row) {
       row.editing = true;
@@ -604,56 +603,36 @@ export default {
 
 /* 滚动容器 */
 .scroll-wrapper {
-  display: flex;
+  display: block;  // Change to block to simplify
   max-height: 55vh;
   position: relative;
+  overflow-y: auto;  // Enable native vertical scrolling
 }
 
 .table-container {
-  flex: 1;
-  overflow: auto;
-  scrollbar-width: none;
-  padding-right: 15px;
-  width: calc(100% - 16px);
+  flex: none;  // Remove flex
+  overflow-y: auto;  // Use native scroll
+  scrollbar-width: auto;  // Allow default scrollbar
+  padding-right: 0;  // Remove padding if not needed
+  width: 100%;  // Full width
 }
 
 .table-container::-webkit-scrollbar {
-  display: none;
+  display: block;  // Show default scrollbar for WebKit browsers
+  width: 8px;  // Match original width
+  background: #f1f1f1;
+}
+
+// Add thumb styling for default scrollbar
+.table-container::-webkit-scrollbar-thumb {
+  background: #9dade7;
+  border-radius: 4px;
 }
 
 /* 自定义滚动条 */
-.custom-scrollbar {
-  width: 8px;
-  background: #f1f1f1;
-  border-radius: 4px;
-  position: relative;
-  margin-left: 8px;
-  height: 100%;
-  top: 55px;
-}
-
-.custom-scrollbar-track {
-  position: relative;
-  height: 380px;
-  cursor: pointer;
-}
-
-.custom-scrollbar-thumb {
-  position: absolute;
-  width: 100%;
-  background: #9dade7;
-  border-radius: 4px;
-  cursor: grab;
-  transition: background 0.2s;
-}
-
-.custom-scrollbar-thumb:hover {
-  background: #6b84d9;
-}
-
-.custom-scrollbar-thumb:active {
-  cursor: grabbing;
-}
+/* .custom-scrollbar { ... } */  // Commented out
+/* .custom-scrollbar-track { ... } */  // Commented out
+/* .custom-scrollbar-thumb { ... } */  // Commented out
 
 .save-Tts {
   background: #796dea;
