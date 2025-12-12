@@ -129,7 +129,7 @@ class TeachingHandler:
 
                             
                                 #直接到教学结束
-                                self._handle_teaching_completion("教学结束，"+encouragement)
+                                return self._handle_teaching_completion(encouragement+"教学结束")
                               
                         else:
                             # 没有步骤ID，不发送任何消息
@@ -177,7 +177,7 @@ class TeachingHandler:
 
                            
                             #直接到教学结束
-                            self._handle_teaching_completion("教学结束，"+encouragement)
+                            return self._handle_teaching_completion("教学结束，"+encouragement)
 
 
                     else:
@@ -237,7 +237,7 @@ class TeachingHandler:
 
                            
                             #直接到教学结束
-                            return self._handle_teaching_completion("教学结束，"+encouragement)
+                            return self._handle_teaching_completion(encouragement+"教学结束")
 
                         message_sent = True
 
@@ -329,16 +329,64 @@ class TeachingHandler:
         # 1. 发送完成消息（使用0.5倍语速）
         self._send_tts_message(ai_message, speech_rate=0.5)
         
-
-
         
+        # 🔥 等待第一条消息完全处理  
+        # completion_duration = self._calculate_speech_duration(ai_message, 0.5)  
+        # time.sleep(completion_duration + 2)  
+
         # 4. 发送自由对话欢迎消息（使用0.5倍语速）
         free_chat_welcome = "现在我们可以自由聊天了，你想聊什么呢？"
-        self._send_tts_message(free_chat_welcome, speech_rate=0.5)
 
-        self.connection.llm_finish_task = True
-        self.connection.allow_interrupt = True
+        # 使用完整的TTS流程  
+        sentence_id = str(uuid.uuid4().hex)  
+        self.connection.sentence_id = sentence_id  
         
+        # 发送 FIRST 请求  
+        self.connection.tts.tts_text_queue.put(  
+            TTSMessageDTO(  
+                sentence_id=sentence_id,  
+                sentence_type=SentenceType.FIRST,  
+                content_type=ContentType.ACTION,  
+                speech_rate=0.5,  
+            )  
+        )  
+        
+        # 等待连接建立  
+        time.sleep(1.0)  
+        
+        # 发送 MIDDLE 请求（实际内容）  
+        self.connection.tts.tts_text_queue.put(  
+            TTSMessageDTO(  
+                sentence_id=sentence_id,  
+                sentence_type=SentenceType.MIDDLE,  
+                content_type=ContentType.TEXT,  
+                content_detail=free_chat_welcome,  
+            )  
+        )  
+        
+        self.connection.dialogue.put(Message(role="assistant", content=free_chat_welcome))  
+        
+        # 设置任务完成标志  
+        self.connection.llm_finish_task = True  
+        
+        # 发送 LAST 请求  
+        self._end_tts_session()  
+        
+        # 等待播放完成  
+        welcome_duration = self._calculate_speech_duration(free_chat_welcome, 0.5)  
+        time.sleep(welcome_duration + 2)  
+
+
+
+        self.connection.allow_interrupt = True
+
+
+        user_id = self.connection.device_id if self.connection.device_id else self.connection.session_id  
+        self.chat_status_manager.set_user_chat_status(user_id, "free_mode")  
+        self.logger.bind(tag=TAG).info(f"✅ 已手动设置用户 {user_id} 为自由模式") 
+
+
+
         # 🔥 切换到自由对话模式，设置自由对话提示词
         free_chat_prompt = f"""你是一个孤独症儿童的教育陪伴助手。你的用户大概在6岁左右，你是{self.connection.child_name}的AI朋友，你叫海王星，现在处于自由聊天模式。
 
@@ -358,7 +406,10 @@ class TeachingHandler:
         
         self.logger.bind(tag=TAG).info("教学完成处理结束，系统已切换到自由模式")
         # 🔥 关键：返回 None 让LLM处理用户输入
-        return None
+
+
+
+        return  True
 
 
 
@@ -427,7 +478,7 @@ class TeachingHandler:
             self._end_tts_session()
 
             # 3. ⚠️ 新增：等待完成消息播放完成
-            completion_duration = self._calculate_speech_duration(message, 1.0)
+            completion_duration = self._calculate_speech_duration(message, speech_rate)
             self.logger.bind(tag=TAG).info(f"等待完成消息播放: {completion_duration:.2f}秒")
             time.sleep(completion_duration+3)
 
@@ -452,11 +503,6 @@ class TeachingHandler:
             # 遍历消息列表,只发送 MIDDLE 类型的文本消息
             for i, message in enumerate(message_list):
 
-
-                #通知设备进入播放
-
-                # from core.handle.sendAudioHandle import send_tts_message
-                # await send_tts_message(conn, "start")
 
 
                 content = message.get("messageContent", "")  

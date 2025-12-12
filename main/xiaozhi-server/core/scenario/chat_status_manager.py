@@ -45,45 +45,6 @@ class ChatStatusManager:
 
 
 
-
-    # def is_mode_switch_command(self, user_text: str) -> Optional[str]:
-    #     """判断是否为模式切换命令 - 基于思维导图优化
-
-    #     Args:
-    #         user_text: 用户输入的文本
-
-    #     Returns:
-    #         str: 目标模式 ("teaching_mode" 或 "free_mode")，如果不是切换命令返回None
-    #     """
-    #     user_text = user_text.strip()
-    #     self.logger.debug(f"判断是否为模式切换命令: {user_text}")
-
-    #     # 教学模式命令 - 扩展更多自然表达
-    #     teaching_commands = [
-    #         "教学模式", "教学", "学习模式", "学习", "开始教学",
-    #         "我要学习", "教我", "学习时间", "上课", "开始学习",
-    #         "我想学习", "教我学习", "学习一下", "开始上课"
-    #     ]
-
-    #     # 自由模式命令 - 扩展更多自然表达
-    #     free_commands = [
-    #         "自由模式", "自由聊天", "聊天模式", "聊天", "结束教学",
-    #         "不学了", "休息", "玩一会", "随便聊", "停止学习",
-    #         "不想学了", "休息一下", "聊聊天", "玩一下"
-    #     ]
-
-    #     # 检查是否为教学模式命令
-    #     if any(cmd in user_text for cmd in teaching_commands):
-    #         self.logger.info(f"检测到教学模式切换命令: {user_text}")
-    #         return "teaching_mode"
-    #     elif any(cmd in user_text for cmd in free_commands):
-    #         self.logger.info(f"检测到自由模式切换命令: {user_text}")
-    #         return "free_mode"
-
-    #     return None
-
-
-
     def is_mode_switch_command(self, user_text: str) -> Optional[Dict]:  
         """判断是否为模式切换命令或场景触发 - 基于思维导图优化  
     
@@ -105,16 +66,16 @@ class ChatStatusManager:
         triggered_scenario = scenario_trigger.detect_trigger(user_text, "voice")  
         if triggered_scenario:  
             self.logger.info(f"检测到场景触发: {triggered_scenario.get('scenarioName', 'Unknown')}")  
-            return {  
-                "type": "scenario_trigger",  
-                "scenario_id": triggered_scenario['id'],  
-                "scenario": triggered_scenario  
-            }  
+            return {    
+                "type": "teaching_mode",  # 改为teaching_mode  
+                "scenario_id": triggered_scenario['id'],    
+                "scenario": triggered_scenario    
+            } 
     
         # 教学模式命令 - 扩展更多自然表达  
         teaching_commands = [  
-            "教学模式", "教学", "学习模式", "学习", "开始教学",  
-            "我要学习", "教我", "学习时间", "上课", "开始学习",  
+            "教学模式", "学习模式", "开始教学",  
+            "我要学习", "学习时间", "开始学习",  
             "我想学习", "教我学习", "学习一下", "开始上课"  
         ]  
     
@@ -200,13 +161,32 @@ class ChatStatusManager:
         try:
             self.logger.info(f"处理用户输入: user_id={user_id}, user_text={user_text}, child_name={child_name}")
 
+            
+            # 🔥 优化：先检查当前聊天状态  
+            current_status = self.get_user_chat_status(user_id)  
+            self.logger.info(f"用户 {user_id} 当前聊天状态: {current_status}")  
+            
+            # 如果已经是教学模式，直接处理教学逻辑，跳过场景触发检测  
+            if current_status == "teaching_mode":  
+                self.logger.info("当前为教学模式，直接处理教学逻辑")  
+                return await self._handle_teaching_mode(user_id, user_text, child_name)              
+            
             # 检查是否为模式切换命令
             target_mode_result = self.is_mode_switch_command(user_text)
+
+
+
+
+
+
+
             if target_mode_result:
                 self.logger.info(f"检测到模式切换命令: {target_mode_result}")
 
                 target_mode = target_mode_result.get("type")  
-                self.logger.info(f"检测到切换命令: {target_mode}")  
+                self.logger.info(f"检测到切换命令: {target_mode}") 
+
+                triggered_scenario = target_mode_result.get("scenario")
 
                 # 切换模式
                 success = self.set_user_chat_status(user_id, target_mode)
@@ -220,15 +200,15 @@ class ChatStatusManager:
                 if target_mode == "teaching_mode":
                     self.logger.info("切换到教学模式，开始教学会话")
                     # 切换到教学模式时，直接开始教学会话并输出场景第一句话
-                    # return await self._start_teaching_session(user_id, child_name, from_mode_switch=True)
+
 
                     return await self._start_teaching_session(user_id, child_name, from_mode_switch=True, scenario=triggered_scenario)  
                 
-                elif target_mode == "scenario_trigger":  
-                    self.logger.info("场景触发，开始教学会话")  
-                    # 场景触发时使用返回的场景  
-                    scenario = target_mode_result.get("scenario")  
-                    return await self._start_teaching_session(user_id, child_name, from_mode_switch=False, scenario=scenario)                
+                # elif target_mode == "scenario_trigger":  
+                #     self.logger.info("场景触发，开始教学会话")  
+                #     # 场景触发时使用返回的场景  
+                #     scenario = target_mode_result.get("scenario")  
+                #     return await self._start_teaching_session(user_id, child_name, from_mode_switch=False, scenario=scenario)                
     
                 else:
                     self.logger.info("切换到自由模式")
@@ -241,15 +221,15 @@ class ChatStatusManager:
                     }
 
             # 获取当前聊天状态
-            current_status = self.get_user_chat_status(user_id)
-            self.logger.info(f"用户 {user_id} 当前聊天状态: {current_status}")
+            # current_status = self.get_user_chat_status(user_id)
+            # self.logger.info(f"用户 {user_id} 当前聊天状态: {current_status}")
 
-            if current_status == "teaching_mode":
-                self.logger.info("当前为教学模式，处理教学逻辑")
-                return await self._handle_teaching_mode(user_id, user_text, child_name)
-            else:
-                self.logger.info("当前为自由模式，继续正常流程")
-                return await self._handle_free_mode(user_text, child_name)
+            # if current_status == "teaching_mode":
+            #     self.logger.info("当前为教学模式，处理教学逻辑")
+            #     return await self._handle_teaching_mode(user_id, user_text, child_name)
+            # else:
+            self.logger.info("当前为自由模式，继续正常流程")
+            return await self._handle_free_mode(user_text, child_name)
 
         except Exception as e:
             self.logger.error(f"处理用户输入失败: {e}", exc_info=True)
@@ -299,6 +279,11 @@ class ChatStatusManager:
             from_mode_switch: 是否从模式切换开始  
             scenario: 触发的场景（新增参数）  
         """  
+
+
+
+
+
         try:  
             print("in _start_teaching_session------------------------------------------------------")  
             

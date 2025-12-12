@@ -889,8 +889,18 @@ class ConnectionHandler:
         # 检查聊天模式（只在最顶层调用时检查）
         if depth == 0:
             chat_result = self._handle_chat_mode(query)
+
+            print("in chat_result: ", chat_result)
             if chat_result:
                 return chat_result
+
+            # # 🔥 如果教学模式刚刚完成，清除教学对话历史  
+            # if hasattr(self, '_teaching_completed'):  
+            #     self._teaching_completed = False  
+            #     # 只保留系统消息  
+            #     system_messages = [msg for msg in self.dialogue.dialogue if msg.role == "system"]  
+            #     self.dialogue.dialogue = system_messages
+
 
         if not tool_call:
             self.dialogue.put(Message(role="user", content=query))
